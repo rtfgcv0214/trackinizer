@@ -58,6 +58,7 @@ from trackinizer.trax.run.adapters.codex import CodexAdapter
 from trackinizer.trax.run.adapters.custom_types import Adapter, StreamAdapter
 from trackinizer.trax.run.adapters.gemini import GeminiAdapter
 from trackinizer.trax.run.adapters.iostream import IOStreamAdapter, LineCapture
+from trackinizer.trax.run.adapters.sagent import SagentAdapter
 from trackinizer.trax.run.inbound import render_inbound
 from trackinizer.trax.run.redact import Redactor, redactor_from_environ
 from trackinizer.trax.run.sink import (
@@ -138,6 +139,7 @@ _ADAPTERS: dict[str, Callable[[], Adapter]] = {
     ClaudeAdapter.name: ClaudeAdapter,
     GeminiAdapter.name: GeminiAdapter,
     CodexAdapter.name: CodexAdapter,
+    SagentAdapter.name: SagentAdapter,
     IOStreamAdapter.name: IOStreamAdapter,
 }
 
@@ -915,6 +917,10 @@ def _cli_argv(
             argv[1:1] = ["--session-id", owner.session_id]
     elif adapter.name == "codex" and "--no-daemon" not in config.cli_args:
         argv.insert(1, "--no-daemon")
+    elif isinstance(adapter, SagentAdapter):
+        # A minted session directory, as claude gets a minted id: it is what
+        # tells this run's transcript from a concurrent run's in the same cwd.
+        argv[1:1] = adapter.session_args(config.cli_args)
     return argv
 
 
