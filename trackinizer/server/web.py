@@ -75,6 +75,7 @@ from trackinizer.server.notify import iter_sse_events, tx
 from trackinizer.server.regex_timeout import apply_regex_statement_timeout
 from trackinizer.server.semantic_mapper_footprint import FootprintMapper
 from trackinizer.server.store.graph_focus import read_neighbourhood
+from trackinizer.server.token_login import add_token_login_route
 from trackinizer.server.store.session_feed import (
     WHOLE_FEED,
     FeedScope,
@@ -929,6 +930,7 @@ def attach(
         ):
             _get(app, path, _RedirectRoute(location=location))
     _add_login_route(app, assets / "login.html")
+    add_token_login_route(app)
 
 
 # Files are served through ``get_response`` from a route, not by mounting the

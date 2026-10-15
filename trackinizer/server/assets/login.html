@@ -97,6 +97,13 @@
   .g { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #fff; }
   .status { color: var(--muted); font-size: 12.5px; }
   @media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+  .token { display: grid; gap: 8px; margin-top: 16px; }
+  .token label { color: var(--muted); font-size: 12.5px; }
+  .token input {
+    min-height: 40px; padding: 4px 12px; border-radius: 8px; border: 1px solid var(--line-strong);
+    background: transparent; color: var(--text); font: inherit; font-size: 13.5px;
+  }
+  button.btn { width: 100%; border: 0; font-family: inherit; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -121,6 +128,12 @@
     </a>
     <p id="status" class="status" role="status"></p>
   </div>
+  <form class="token" method="post" action="/auth/token_login">
+    <label for="token-input">Or sign in with an API token</label>
+    <input id="token-input" name="token" type="password" autocomplete="off" placeholder="trax_..." required>
+    <input id="token-next" name="next" type="hidden">
+    <button class="btn" type="submit">Sign in with token</button>
+  </form>
 </main>
 <script>
   // The browser carries a link's hash across the server's redirect to this
@@ -132,12 +145,22 @@
     : "";
   const google = document.getElementById("google");
   const notice = document.getElementById("status");
+  document.getElementById("token-next").value = target;
+  const TOKEN_ERRORS = {
+    invalid: "That token is not a valid API token of a person.",
+    narrow: "That token opens less than its account. Use an unrestricted key.",
+    unconfigured: "Token sign-in needs TRACKINIZER_SESSION_SECRET on the server.",
+    disabled: "This server runs without auth; no sign-in is needed.",
+  };
+  const tokenError = TOKEN_ERRORS[new URLSearchParams(location.search).get("error")];
   // A server offers Google sign-in only where it can start one: the check
   // answers 503 when it is not configured and 404 where it is not installed.
+  if (tokenError) notice.textContent = tokenError;
   fetch("/auth/login/ready", { cache: "no-store" }).then(
     (response) => {
       if (!response.ok) {
-        notice.textContent = "Sign-in is not configured on this server.";
+        // No Google sign-in here; the token form below still signs in.
+        google.closest(".actions").hidden = !tokenError;
         return;
       }
       if (target) google.href = `/auth/login?next=${encodeURIComponent(target)}`;
